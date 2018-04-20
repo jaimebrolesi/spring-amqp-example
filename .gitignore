@@ -1,6 +1,7 @@
 /target/
 !.mvn/wrapper/maven-wrapper.jar
 .mvn/
+rabbitmq/storage/
 
 ### STS ###
 .apt_generated
