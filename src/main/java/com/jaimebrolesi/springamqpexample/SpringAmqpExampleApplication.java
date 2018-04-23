@@ -1,24 +1,31 @@
 package com.jaimebrolesi.springamqpexample;
 
-import com.jaimebrolesi.springamqpexample.consumer.ReactConsumer;
-import com.jaimebrolesi.springamqpexample.producer.ReactExchangeProducer;
+import com.jaimebrolesi.springamqpexample.consumer.Consumer;
+import com.jaimebrolesi.springamqpexample.producer.Producer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.jms.annotation.EnableJms;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
+@RestController
 public class SpringAmqpExampleApplication {
 
     private static final String QUEUE = "eventQueue";
     private static final String EXCHANGE = "delayedExchange";
 
-	public static void main(String[] args) {
-		ConfigurableApplicationContext context = SpringApplication.run(SpringAmqpExampleApplication.class, args);
-        //final ReactProducer producer = context.getBean(ReactProducer.class);
-        final ReactExchangeProducer producer = context.getBean(ReactExchangeProducer.class);
-        final ReactConsumer consumer = context.getBean(ReactConsumer.class);
+    public static void main(String[] args) {
+        SpringApplication.run(SpringAmqpExampleApplication.class, args);
+    }
 
-        //producer.produce(EXCHANGE);
-        consumer.consume(QUEUE);
-	}
+    @Autowired
+    private Producer producer;
+
+    @RequestMapping(method = RequestMethod.GET, value = "/send")
+    private void send() {
+        producer.send(QUEUE, "This message was delayed.");
+    }
 }
