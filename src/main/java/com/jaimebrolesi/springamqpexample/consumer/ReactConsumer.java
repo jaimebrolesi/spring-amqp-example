@@ -17,7 +17,6 @@ import javax.annotation.PreDestroy;
 @Service
 public class ReactConsumer {
 
-    private static final String QUEUE = "demo-queue";
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactConsumer.class);
 
     private final Receiver receiver;
@@ -30,11 +29,10 @@ public class ReactConsumer {
     }
 
     public void consume(String queue) {
-        Mono<AMQP.Queue.DeclareOk> queueDeclaration = sender.declareQueue(QueueSpecification.queue(queue));
+        Mono<AMQP.Queue.DeclareOk> queueDeclaration = sender.declareQueue(QueueSpecification.queue(queue).durable(true));
         Flux<Delivery> messages = receiver.consumeAutoAck(queue);
-        disposable = queueDeclaration.thenMany(messages).subscribe(m -> {
-            LOGGER.info("Received message {}", new String(m.getBody()));
-        });
+            disposable = queueDeclaration.thenMany(messages).subscribe();//m ->
+                    //LOGGER.info("Received message {}", new String(m.getBody())));
     }
 
     @PreDestroy
