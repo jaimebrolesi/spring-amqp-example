@@ -1,7 +1,6 @@
 package com.jaimebrolesi.springamqpexample.consumer;
 
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
