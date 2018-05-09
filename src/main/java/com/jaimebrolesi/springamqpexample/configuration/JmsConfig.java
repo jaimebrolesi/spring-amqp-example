@@ -1,56 +1,80 @@
 package com.jaimebrolesi.springamqpexample.configuration;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQPrefetchPolicy;
+import org.apache.activemq.jms.pool.PooledConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
+import org.springframework.jms.support.converter.MessageConverter;
+import org.springframework.jms.support.converter.MessageType;
 
-import javax.jms.ConnectionFactory;
-
-@Configuration
 @EnableJms
+@Configuration
 public class JmsConfig {
 
-    @Value("${spring.activemq.broker-url}")
+    @Value("${jms.broker-url}")
     private String brokerUrl;
 
-    @Value("${spring.activemq.user}")
-    private String user;
+    @Value("${jms.username}")
+    private String username;
 
-    @Value("${spring.activemq.password}")
+    @Value("${jms.password}")
     private String password;
 
-    @Bean public ActiveMQConnectionFactory connectionFactory() {
-        if ("".equals(user)) {
-            return new ActiveMQConnectionFactory(brokerUrl);
-        }
-        return new ActiveMQConnectionFactory(user, password, brokerUrl);
+    private ActiveMQConnectionFactory activeMQConnectionFactory() {
+        final ActiveMQConnectionFactory activeMQConnectionFactory =
+                new ActiveMQConnectionFactory(username, password, brokerUrl);
+        activeMQConnectionFactory.setPrefetchPolicy(activeMQPrefetchPolicy());
+        return activeMQConnectionFactory;
+    }
+
+    private ActiveMQPrefetchPolicy activeMQPrefetchPolicy() {
+        ActiveMQPrefetchPolicy activeMQPrefetchPolicy = new ActiveMQPrefetchPolicy();
+        activeMQPrefetchPolicy.setQueuePrefetch(1000);
+        return activeMQPrefetchPolicy;
     }
 
     @Bean
-    public JmsListenerContainerFactory jmsFactoryTopic(ConnectionFactory connectionFactory,
-                                                       DefaultJmsListenerContainerFactoryConfigurer configurer) {
+    public PooledConnectionFactory pooledConnectionFactory() {
+        final PooledConnectionFactory pooledConnectionFactory = new PooledConnectionFactory();
+        pooledConnectionFactory.setConnectionFactory(activeMQConnectionFactory());
+        pooledConnectionFactory.setMaxConnections(10);
+        return pooledConnectionFactory;
+
+    }
+
+    @Bean
+    public JmsListenerContainerFactory<?> jmsFactoryQueue() {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-        configurer.configure(factory, connectionFactory);
-        factory.setPubSubDomain(true);
+        factory.setConcurrency("10");
+        factory.setMessageConverter(messageConverter());
         return factory;
     }
 
     @Bean
-    public JmsTemplate jmsTemplate() {
-        return new JmsTemplate(connectionFactory());
+    public MessageConverter messageConverter() {
+        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        converter.setTargetType(MessageType.TEXT);
+        converter.setTypeIdPropertyName("_type");
+        return converter;
     }
 
     @Bean
-    public JmsTemplate jmsTemplateTopic() {
-        JmsTemplate jmsTemplate = new JmsTemplate(connectionFactory());
+    public JmsTemplate queueJmsTemplate() {
+        return new JmsTemplate(pooledConnectionFactory());
+    }
+
+    @Bean
+    public JmsTemplate topicJmsTemplate() {
+        final JmsTemplate jmsTemplate = new JmsTemplate(activeMQConnectionFactory());
         jmsTemplate.setPubSubDomain(true);
         return jmsTemplate;
     }
-}
 
+}
