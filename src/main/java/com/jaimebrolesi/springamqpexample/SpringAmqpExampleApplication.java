@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.jms.annotation.EnableJms;
-import org.springframework.jms.core.BrowserCallback;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,13 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.jms.*;
-import java.time.Duration;
+import javax.jms.Message;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Enumeration;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @SpringBootApplication
 @RestController
@@ -33,7 +28,7 @@ public class SpringAmqpExampleApplication {
         final ConfigurableApplicationContext run = SpringApplication.run(SpringAmqpExampleApplication.class, args);
         final Producer bean = run.getBean(Producer.class);
 
-        int count = 1;
+        int count = 100;
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -54,12 +49,11 @@ public class SpringAmqpExampleApplication {
     @Autowired
     private JmsTemplate topicJmsTemplate;
 
-    @RequestMapping(method = RequestMethod.GET, value = "/delete/{messageId}")
-    public void delete(@PathVariable String messageId) {
+    @RequestMapping(method = RequestMethod.GET, value = "/delete/{id}")
+    public void delete(@PathVariable String id) {
         topicJmsTemplate.convertAndSend(ScheduledMessage.AMQ_SCHEDULER_MANAGEMENT_DESTINATION, "delete", delayed -> {
             delayed.setStringProperty(ScheduledMessage.AMQ_SCHEDULER_ACTION, ScheduledMessage.AMQ_SCHEDULER_ACTION_REMOVE);
-            delayed.setStringProperty(ScheduledMessage.AMQ_SCHEDULED_ID, messageId);
-            System.out.println("Deleting message: " + messageId);
+            delayed.setStringProperty(ScheduledMessage.AMQ_SCHEDULED_ID, id);
             return delayed;
         });
     }

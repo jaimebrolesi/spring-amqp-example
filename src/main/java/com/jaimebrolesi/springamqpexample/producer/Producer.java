@@ -28,8 +28,8 @@ public class Producer {
 
     public void send(String queueName, String message, LocalDateTime time) {
 
-        ExecutorService exec = Executors.newFixedThreadPool(35);
-        final Duration duration = Duration.between(time, time.plusMinutes(10));
+        ExecutorService exec = Executors.newFixedThreadPool(160);
+        final Duration duration = Duration.between(time, time.plusSeconds(10));
         try {
             for (final Integer o : createInsertionPolicy()) {
                 exec.submit(() -> {
@@ -57,7 +57,7 @@ public class Producer {
     private LinkedList<Integer> createInsertionPolicy() {
         LinkedList<Integer> elements = new LinkedList<>();
         //31 * 5 = 155 =
-        for (int i = 0; i < 31; ++i) {
+        for (int i = 0; i < 31*5; ++i) {
             elements.add(i);
         }
         return elements;

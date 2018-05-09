@@ -50,7 +50,7 @@ public class JmsConfig {
     }
 
     @Bean
-    public JmsListenerContainerFactory<?> jmsFactoryQueue() {
+    public JmsListenerContainerFactory<?> jmsListenerContainerFactoryQueue() {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setConcurrency("10");
         factory.setMessageConverter(messageConverter());
